@@ -1,0 +1,1187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<title>Blaster Bag Tracker Pro</title>
+
+<!-- PWA Meta Tags -->
+<meta name="description" content="Narcotic bag tracking for EMS agencies — DEA compliant, offline-ready."/>
+<meta name="theme-color" content="#0d2a5e"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="Bag Tracker"/>
+
+<!-- PWA Icons (inline SVG as data URIs) -->
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='36' fill='%230d2a5e'/%3E%3Ctext x='96' y='130' font-size='110' text-anchor='middle' font-family='system-ui'%3E💊%3C/text%3E%3C/svg%3E"/>
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='36' fill='%230d2a5e'/%3E%3Ctext x='96' y='130' font-size='110' text-anchor='middle' font-family='system-ui'%3E💊%3C/text%3E%3C/svg%3E"/>
+
+<!-- PWA Manifest (inline) -->
+<script>
+(function(){
+  var manifest={
+    name:'Blaster Bag Tracker Pro',
+    short_name:'Bag Tracker',
+    description:'Narcotic bag tracking for EMS — DEA compliant',
+    start_url:'.',
+    display:'standalone',
+    background_color:'#0d2a5e',
+    theme_color:'#0d2a5e',
+    orientation:'any',
+    icons:[
+      {src:"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='36' fill='%230d2a5e'/%3E%3Ctext x='96' y='130' font-size='110' text-anchor='middle' font-family='system-ui'%3E%F0%9F%92%8A%3C/text%3E%3C/svg%3E",sizes:'192x192',type:'image/svg+xml'},
+      {src:"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='96' fill='%230d2a5e'/%3E%3Ctext x='256' y='360' font-size='300' text-anchor='middle' font-family='system-ui'%3E%F0%9F%92%8A%3C/text%3E%3C/svg%3E",sizes:'512x512',type:'image/svg+xml'}
+    ]
+  };
+  var blob=new Blob([JSON.stringify(manifest)],{type:'application/manifest+json'});
+  var url=URL.createObjectURL(blob);
+  var link=document.createElement('link');
+  link.rel='manifest';link.href=url;
+  document.currentScript.parentNode.insertBefore(link,document.currentScript);
+})();
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://unpkg.com/@zxing/library@0.19.1/umd/index.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--navy:#0d2a5e;--orange:#E8500A;--green:#1a8a3a;--light:#f0f4fb;--white:#fff;--text:#1a1f2e;--muted:#6b7280;--border:#dde5f0;--radius:10px;--shadow:0 2px 12px rgba(13,42,94,0.08);--danger:#dc2626;--dangerbg:#fef2f2;--success:#16a34a;--successbg:#f0fdf4;--warning:#d97706;--warningbg:#fffbeb}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--light);color:var(--text);min-height:100vh;font-size:14px}
+a{color:var(--navy)}
+/* NAV */
+.topbar{background:var(--navy);padding:10px 20px;padding-top:max(10px,env(safe-area-inset-top));display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;box-shadow:0 2px 8px rgba(0,0,0,0.2)}
+/* INSTALL BANNER */
+.install-banner{background:linear-gradient(90deg,#0d2a5e,#1a4fa0);color:#fff;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:13px;border-bottom:2px solid var(--orange)}
+.install-banner span{flex:1}
+.install-banner strong{color:#f97316}
+.install-banner-btns{display:flex;gap:8px;flex-shrink:0}
+.install-banner button{border:none;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn-install{background:var(--orange);color:#fff}
+.btn-dismiss{background:rgba(255,255,255,0.15);color:#fff}
+.logo{color:#fff;font-size:16px;font-weight:600}.logo em{color:#f97316;font-style:normal}.logo small{font-size:10px;color:rgba(255,255,255,0.4);margin-left:6px;text-transform:uppercase;letter-spacing:1px}
+.topbar-right{display:flex;align-items:center;gap:8px}
+.agency-pill{background:rgba(255,255,255,0.12);color:#fff;font-size:12px;padding:5px 12px;border-radius:100px;cursor:pointer;border:0.5px solid rgba(255,255,255,0.2);transition:background 0.2s}
+.agency-pill:hover{background:rgba(255,255,255,0.2)}
+/* TABS */
+.tabs{background:#fff;border-bottom:1px solid var(--border);display:flex;overflow-x:auto;padding:0 20px}
+.tab{padding:11px 18px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:color 0.15s}
+.tab.active{color:var(--navy);border-bottom-color:var(--navy)}
+.tab:hover:not(.active){color:var(--text)}
+/* VIEWS */
+.view{display:none;padding:20px;max-width:1200px;margin:0 auto}
+.view.active{display:block}
+/* STATS */
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px}
+.stat-card{background:#fff;border-radius:var(--radius);padding:14px 16px;border:1px solid var(--border)}
+.stat-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:4px}
+.stat-val{font-size:26px;font-weight:600;color:var(--navy)}
+.stat-val.danger{color:var(--danger)}
+/* INVENTORY CARDS */
+.inv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-bottom:18px}
+.inv-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:12px;border-top-width:4px}
+.inv-drug{font-size:12px;font-weight:600;margin-bottom:2px}
+.inv-count{font-size:24px;font-weight:600}
+.inv-sub{font-size:11px;color:var(--muted)}
+.inv-bar{height:4px;border-radius:2px;background:var(--border);margin-top:8px;overflow:hidden}
+.inv-fill{height:100%;border-radius:2px;transition:width 0.4s}
+/* FORM */
+.form-card{background:#fff;border-radius:var(--radius);border:1px solid var(--border);padding:20px;margin-bottom:16px;box-shadow:var(--shadow)}
+.form-title{font-size:15px;font-weight:600;margin-bottom:16px;color:var(--navy)}
+.form-grid{display:grid;gap:12px;margin-bottom:12px}
+.g2{grid-template-columns:1fr 1fr}
+.g3{grid-template-columns:1fr 1fr 1fr}
+.g4{grid-template-columns:1fr 1fr 1fr 1fr}
+.g1{grid-template-columns:1fr}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px}
+.field input,.field select,.field textarea{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;color:var(--text);background:#fff;transition:border-color 0.2s,box-shadow 0.2s}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--navy);box-shadow:0 0 0 3px rgba(13,42,94,0.1)}
+.field textarea{min-height:72px;resize:vertical}
+/* BUTTONS */
+.btn{padding:9px 20px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:opacity 0.15s,transform 0.1s;border:none;font-family:inherit;display:inline-flex;align-items:center;gap:6px}
+.btn:active{transform:scale(0.98)}
+.btn-navy{background:var(--navy);color:#fff}
+.btn-navy:hover{opacity:0.88}
+.btn-orange{background:var(--orange);color:#fff}
+.btn-orange:hover{opacity:0.88}
+.btn-outline{background:#fff;border:1px solid var(--border);color:var(--text)}
+.btn-outline:hover{background:var(--light)}
+.btn-sm{padding:5px 12px;font-size:12px}
+.btn-danger-sm{background:var(--dangerbg);color:var(--danger);border:1px solid #fca5a5;padding:4px 10px;border-radius:6px;font-size:11px;cursor:pointer;font-family:inherit;font-weight:600}
+/* TABLE */
+.tbl-wrap{overflow-x:auto;border-radius:var(--radius);border:1px solid var(--border);background:#fff}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{font-size:10px;font-weight:700;color:var(--muted);text-align:left;padding:8px 12px;border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:0.8px;background:#fafbff;white-space:nowrap}
+td{padding:9px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#f8faff}
+/* BADGES */
+.badge{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:100px}
+.badge-low{background:var(--dangerbg);color:var(--danger)}
+.badge-ok{background:var(--successbg);color:var(--success)}
+.drug-dot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:5px;vertical-align:middle;flex-shrink:0}
+/* ALERTS */
+.alert{background:var(--warningbg);border:1px solid #fcd34d;border-radius:8px;padding:10px 14px;font-size:12px;color:#92400e;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between}
+/* FILTERS */
+.filter-row{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center}
+.filter-row select,.filter-row input{padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px;font-family:inherit;color:var(--text);background:#fff}
+/* REPORTS */
+.report-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.report-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:14px}
+.report-card h3{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px}
+.bar-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:12px}
+.bar-label{width:78px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar-track{flex:1;height:8px;background:var(--light);border-radius:4px;overflow:hidden}
+.bar-fill{height:100%;border-radius:4px;transition:width 0.4s}
+.bar-val{width:26px;text-align:right;font-weight:600;color:var(--text)}
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100;justify-content:center;align-items:flex-start;padding-top:60px}
+.modal-overlay.open{display:flex}
+.modal{background:#fff;border-radius:14px;padding:24px;width:92%;max-width:460px;box-shadow:0 20px 60px rgba(0,0,0,0.2);max-height:80vh;overflow-y:auto}
+.modal h3{font-size:16px;font-weight:600;margin-bottom:16px;color:var(--navy)}
+.modal-footer{display:flex;justify-content:flex-end;gap:8px;margin-top:16px;padding-top:16px;border-top:1px solid var(--border)}
+.agency-item{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-radius:8px;border:1px solid var(--border);margin-bottom:6px;cursor:pointer;transition:background 0.15s;font-size:13px}
+.agency-item:hover{background:var(--light)}
+.agency-item.sel{border-color:var(--navy);background:#eff6ff}
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--navy);color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;font-weight:500;box-shadow:0 8px 24px rgba(0,0,0,0.15);opacity:0;transition:opacity 0.3s,transform 0.3s;transform:translateY(8px);pointer-events:none;z-index:200}
+.toast.show{opacity:1;transform:translateY(0)}
+/* SCANNER */
+.scan-btn{background:var(--orange);color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-family:inherit;transition:opacity 0.2s;white-space:nowrap}
+.scan-btn:hover{opacity:0.88}
+.scanner-modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:300;flex-direction:column;align-items:center;justify-content:center}
+.scanner-modal-overlay.open{display:flex}
+.scanner-box{background:#000;border-radius:16px;overflow:hidden;position:relative;width:min(92vw,480px);box-shadow:0 0 0 3px var(--orange),0 24px 60px rgba(0,0,0,0.6)}
+.scanner-header{background:var(--navy);padding:14px 18px;display:flex;align-items:center;justify-content:space-between}
+.scanner-header span{color:#fff;font-weight:700;font-size:14px}
+.scanner-close{background:rgba(255,255,255,0.15);border:none;color:#fff;border-radius:6px;padding:5px 12px;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit}
+.scanner-close:hover{background:rgba(255,255,255,0.25)}
+#scanner-video{width:100%;display:block;max-height:340px;object-fit:cover;background:#111}
+.scanner-reticle{position:absolute;left:50%;top:50%;transform:translate(-50%,-55%);width:220px;height:120px;pointer-events:none}
+.scanner-reticle::before,.scanner-reticle::after{content:'';position:absolute;width:36px;height:36px;border-color:var(--orange);border-style:solid}
+.scanner-reticle::before{top:0;left:0;border-width:3px 0 0 3px;border-radius:4px 0 0 0}
+.scanner-reticle::after{bottom:0;right:0;border-width:0 3px 3px 0;border-radius:0 0 4px 0}
+.reticle-tr,.reticle-bl{position:absolute;width:36px;height:36px;border-color:var(--orange);border-style:solid;pointer-events:none}
+.reticle-tr{top:0;right:0;border-width:3px 3px 0 0;border-radius:0 4px 0 0}
+.reticle-bl{bottom:0;left:0;border-width:0 0 3px 3px;border-radius:0 0 0 4px}
+.scanner-laser{position:absolute;left:10%;right:10%;height:2px;background:linear-gradient(90deg,transparent,var(--orange),transparent);top:50%;transform:translateY(-50%);animation:laser 2s ease-in-out infinite;border-radius:2px}
+@keyframes laser{0%,100%{top:30%;opacity:0.6}50%{top:70%;opacity:1}}
+.scanner-status{background:#111;color:rgba(255,255,255,0.7);text-align:center;padding:12px;font-size:12px;font-weight:500;letter-spacing:0.3px}
+.scanner-status.success{color:#4ade80;background:#052e16}
+.scanner-status.error{color:#f87171;background:#2d0000}
+.scanner-manual{background:#1a1a1a;padding:12px 16px;display:flex;gap:8px;align-items:center}
+.scanner-manual input{flex:1;background:#2a2a2a;border:1px solid #444;color:#fff;padding:7px 10px;border-radius:6px;font-size:13px;font-family:inherit}
+.scanner-manual input::placeholder{color:#666}
+.scanner-manual input:focus{outline:none;border-color:var(--orange)}
+.scanner-manual button{background:var(--orange);color:#fff;border:none;border-radius:6px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap}
+.scanner-cam-select{background:#1a1a1a;padding:8px 16px;display:flex;gap:8px;align-items:center}
+.scanner-cam-select select{flex:1;background:#2a2a2a;border:1px solid #444;color:#fff;padding:6px 8px;border-radius:6px;font-size:12px;font-family:inherit}
+.scanner-cam-select label{color:#888;font-size:11px;white-space:nowrap}
+/* SEC HEADER */
+.sec{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin:16px 0 10px;display:flex;align-items:center;gap:8px}
+.sec::after{content:'';flex:1;height:1px;background:var(--border)}
+.empty{text-align:center;padding:36px;color:var(--muted);font-size:13px}
+/* STORAGE INFO */
+.storage-info{background:var(--light);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--muted);display:flex;justify-content:space-between;margin-bottom:12px}
+@media(max-width:700px){
+  .stat-row{grid-template-columns:1fr 1fr}
+  .g3,.g4{grid-template-columns:1fr 1fr}
+  .report-grid{grid-template-columns:1fr}
+  .g2{grid-template-columns:1fr}
+  .tabs{padding-bottom:env(safe-area-inset-bottom)}
+  .btn{min-height:44px}
+  .scan-btn{min-height:44px}
+  .tab{padding:13px 14px;min-height:44px}
+  .field input,.field select,.field textarea{min-height:44px;font-size:16px!important} /* prevent iOS zoom */
+  .filter-row{gap:6px}
+  .install-banner{flex-direction:column;align-items:flex-start;gap:8px}
+  .install-banner-btns{width:100%;justify-content:flex-end}
+  body{padding-bottom:env(safe-area-inset-bottom)}
+}
+@media(max-width:480px){
+  .g3,.g4{grid-template-columns:1fr}
+  .topbar-right .btn{display:none} /* hide PDF btn on very small screens, available in tabs */
+}
+</style>
+</head>
+<body>
+
+<!-- PWA INSTALL BANNER -->
+<div class="install-banner" id="install-banner" style="display:none">
+  <span>📱 <strong>Install Bag Tracker</strong> — add to your home screen for offline access &amp; faster launch</span>
+  <div class="install-banner-btns">
+    <button class="btn-install" id="install-btn">Install App</button>
+    <button class="btn-dismiss" onclick="dismissInstall()">Not now</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- BARCODE SCANNER MODAL -->
+<div class="scanner-modal-overlay" id="scanner-modal">
+  <div class="scanner-box">
+    <div class="scanner-header">
+      <span>📷 Scan Barcode</span>
+      <button class="scanner-close" onclick="closeScanner()">✕ Close</button>
+    </div>
+    <div style="position:relative">
+      <video id="scanner-video" autoplay muted playsinline></video>
+      <div class="scanner-reticle">
+        <div class="reticle-tr"></div>
+        <div class="reticle-bl"></div>
+      </div>
+      <div class="scanner-laser"></div>
+    </div>
+    <div class="scanner-cam-select">
+      <label>Camera:</label>
+      <select id="cam-select" onchange="switchCamera()"><option>Loading cameras…</option></select>
+    </div>
+    <div class="scanner-status" id="scanner-status">Point camera at a barcode…</div>
+    <div class="scanner-manual">
+      <input type="text" id="manual-barcode" placeholder="Or type barcode manually…" onkeydown="if(event.key==='Enter')confirmManual()"/>
+      <button onclick="confirmManual()">Use</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="agency-modal">
+  <div class="modal">
+    <h3>Switch agency</h3>
+    <div class="storage-info"><span id="m-storage">Loading...</span><span id="m-entries">0 entries</span></div>
+    <div id="m-agency-list"></div>
+    <div style="border-top:1px solid var(--border);padding-top:14px;margin-top:8px">
+      <div style="font-size:13px;font-weight:600;margin-bottom:10px;color:var(--navy)">Add new agency</div>
+      <div class="form-grid g2" style="margin-bottom:8px">
+        <div class="field"><label>Agency name</label><input type="text" id="m-ag-name" placeholder="e.g. Riverside Fire Dept."/></div>
+        <div class="field"><label>Short code</label><input type="text" id="m-ag-code" placeholder="e.g. RFD" maxlength="6"/></div>
+      </div>
+      <button class="btn btn-navy btn-sm" onclick="quickAddAgency()">Add agency</button>
+    </div>
+    <div class="modal-footer"><button class="btn btn-outline" onclick="closeModal()">Done</button></div>
+  </div>
+</div>
+
+<div class="topbar">
+  <div>
+    <div class="logo">Blaster<em>.</em>Bag Tracker <small>Pro</small></div>
+  </div>
+  <div class="topbar-right">
+    <span class="agency-pill" id="agency-pill" onclick="openModal()">All agencies ▾</span>
+    <button class="btn btn-orange btn-sm" onclick="exportPDF()">&#128196; Export PDF</button>
+  </div>
+</div>
+
+<div class="tabs" id="tabs">
+  <div class="tab active" onclick="showTab('dashboard',this)">Dashboard</div>
+  <div class="tab" onclick="showTab('log',this)">Log a bag</div>
+  <div class="tab" onclick="showTab('history',this)">History</div>
+  <div class="tab" onclick="showTab('inventory',this)">Inventory</div>
+  <div class="tab" onclick="showTab('reports',this)">Reports</div>
+  <div class="tab" onclick="showTab('agencies',this)">Agencies</div>
+</div>
+
+<!-- DASHBOARD -->
+<div class="view active" id="view-dashboard">
+  <div class="stat-row">
+    <div class="stat-card"><div class="stat-label">Today</div><div class="stat-val" id="s-today">0</div></div>
+    <div class="stat-card"><div class="stat-label">This month</div><div class="stat-val" id="s-month">0</div></div>
+    <div class="stat-card"><div class="stat-label">Total logged</div><div class="stat-val" id="s-total">0</div></div>
+    <div class="stat-card"><div class="stat-label">Low stock alerts</div><div class="stat-val danger" id="s-low">0</div></div>
+  </div>
+  <div id="dash-alerts"></div>
+  <div class="sec">Inventory snapshot</div>
+  <div class="inv-grid" id="dash-inv"></div>
+  <div class="sec">Recent activity</div>
+  <div id="dash-recent"></div>
+</div>
+
+<!-- LOG -->
+<div class="view" id="view-log">
+  <div class="form-card">
+    <div class="form-title">Log a bag used on a unit</div>
+    <div class="form-grid g3">
+      <div class="field"><label>Agency *</label><select id="f-agency"><option value="">Select agency</option></select></div>
+      <div class="field"><label>Date *</label><input type="date" id="f-date"/></div>
+      <div class="field"><label>Time *</label><input type="time" id="f-time"/></div>
+    </div>
+    <div class="form-grid g4">
+      <div class="field"><label>Unit # *</label><input type="text" id="f-unit" placeholder="e.g. Unit 101"/></div>
+      <div class="field"><label>Drug name *</label>
+        <select id="f-drug">
+          <option value="">Select drug</option>
+          <option>Fentanyl</option><option>Versed</option><option>Morphine</option>
+          <option>Ketamine</option><option>Ativan</option><option>Narcan</option>
+          <option>Valium</option><option>Waste</option><option>Other</option>
+        </select>
+      </div>
+      <div class="field"><label>Bag size *</label>
+        <select id="f-size"><option>3x4 in (Short)</option><option>7x3 in (Carpuject)</option></select>
+      </div>
+      <div class="field"><label>Qty used</label><input type="number" id="f-qty" value="1" min="1" max="20"/></div>
+    </div>
+    <div class="form-grid g3">
+      <div class="field"><label>Barcode / Serial # *</label><div style="display:flex;gap:6px;align-items:flex-end"><input type="text" id="f-barcode" placeholder="e.g. BC10202-F" style="flex:1"/><button type="button" class="scan-btn" onclick="openScanner('f-barcode')">📷 Scan</button></div></div>
+      <div class="field"><label>Medic name *</label><input type="text" id="f-medic" placeholder="First Last"/></div>
+      <div class="field"><label>Patient call #</label><input type="text" id="f-call" placeholder="Optional"/></div>
+    </div>
+    <div class="form-grid g1">
+      <div class="field"><label>Notes</label><input type="text" id="f-notes" placeholder="Waste reason, incident details, etc. (optional)"/></div>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;margin-top:6px">
+      <button class="btn btn-navy" onclick="saveEntry()">&#10003; Save entry</button>
+      <button class="btn btn-outline" onclick="clearForm()">Clear</button>
+      <span style="font-size:11px;color:var(--muted)">Fields marked * are required</span>
+    </div>
+  </div>
+</div>
+
+<!-- HISTORY -->
+<div class="view" id="view-history">
+  <div class="filter-row">
+    <select id="flt-agency" onchange="renderHistory()"><option value="">All agencies</option></select>
+    <select id="flt-drug" onchange="renderHistory()">
+      <option value="">All drugs</option>
+      <option>Fentanyl</option><option>Versed</option><option>Morphine</option>
+      <option>Ketamine</option><option>Ativan</option><option>Narcan</option><option>Valium</option><option>Waste</option>
+    </select>
+    <input type="text" id="flt-unit" placeholder="Unit #" oninput="renderHistory()" style="width:90px"/>
+    <input type="text" id="flt-medic" placeholder="Medic name" oninput="renderHistory()" style="width:110px"/>
+    <input type="date" id="flt-from" onchange="renderHistory()"/>
+    <input type="date" id="flt-to" onchange="renderHistory()"/>
+    <button class="btn btn-outline btn-sm" onclick="clearFilters()">Clear filters</button>
+    <button class="btn btn-orange btn-sm" onclick="exportPDF()">&#128196; Export PDF</button>
+  </div>
+  <div class="filter-row" style="background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:8px 12px;margin-bottom:10px">
+    <span style="font-size:12px;font-weight:700;color:#92400e;white-space:nowrap">🔍 Scan to search:</span>
+    <input type="text" id="flt-barcode" placeholder="Barcode / serial #" oninput="renderHistory()" style="width:160px;font-family:monospace"/>
+    <button class="scan-btn" style="padding:6px 12px;font-size:12px" onclick="openScanner('flt-barcode')">📷 Scan barcode</button>
+    <button class="btn btn-outline btn-sm" onclick="document.getElementById('flt-barcode').value='';renderHistory()">✕ Clear</button>
+    <span id="barcode-match-count" style="font-size:12px;color:#92400e;font-weight:600"></span>
+  </div>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr>
+        <th>Agency</th><th>Date</th><th>Time</th><th>Unit</th><th>Drug</th>
+        <th>Size</th><th>Qty</th><th>Barcode</th><th>Medic</th><th>Call #</th><th>Notes</th><th></th>
+      </tr></thead>
+      <tbody id="history-body"></tbody>
+    </table>
+    <div id="history-empty" class="empty" style="display:none">No entries match your filters.</div>
+  </div>
+  <div style="margin-top:8px;font-size:12px;color:var(--muted)" id="history-count"></div>
+</div>
+
+<!-- INVENTORY -->
+<div class="view" id="view-inventory">
+  <div class="filter-row">
+    <select id="inv-flt" onchange="renderInventory()"><option value="">All agencies</option></select>
+  </div>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr>
+        <th>Drug name</th><th>Color</th><th>Short bags (3x4 in)</th>
+        <th>Carpuject bags (7x3 in)</th><th>Total on hand</th><th>Status</th><th>Reorder</th>
+      </tr></thead>
+      <tbody id="inv-body"></tbody>
+    </table>
+  </div>
+  <div style="margin-top:10px;font-size:12px;color:var(--muted)">
+    Low stock alert threshold: 50 bags. Use +50 to add inventory, - to remove one.
+  </div>
+</div>
+
+<!-- REPORTS -->
+<div class="view" id="view-reports">
+  <div class="filter-row" style="margin-bottom:14px">
+    <select id="rpt-flt" onchange="renderReports()"><option value="">All agencies</option></select>
+    <select id="rpt-month" onchange="renderReports()">
+      <option value="">All time</option>
+    </select>
+    <button class="btn btn-orange btn-sm" onclick="exportPDF()">&#128196; Export PDF</button>
+  </div>
+  <div class="report-grid" id="report-grid"></div>
+</div>
+
+<!-- AGENCIES -->
+<div class="view" id="view-agencies">
+  <div class="form-card">
+    <div class="form-title">Registered agencies</div>
+    <div class="storage-info"><span id="ag-storage"></span><span id="ag-entries"></span></div>
+    <div id="agency-table-wrap"></div>
+    <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
+      <div style="font-size:14px;font-weight:600;margin-bottom:14px;color:var(--navy)">Add new agency</div>
+      <div class="form-grid g3">
+        <div class="field"><label>Agency name *</label><input type="text" id="ag-name" placeholder="e.g. Riverside Fire Dept."/></div>
+        <div class="field"><label>Short code *</label><input type="text" id="ag-code" placeholder="e.g. RFD" maxlength="6"/></div>
+        <div class="field"><label>Contact name</label><input type="text" id="ag-contact" placeholder="Optional"/></div>
+      </div>
+      <div class="form-grid g3">
+        <div class="field"><label>Email</label><input type="email" id="ag-email" placeholder="Optional"/></div>
+        <div class="field"><label>Phone</label><input type="tel" id="ag-phone" placeholder="Optional"/></div>
+        <div class="field"><label>City / Region</label><input type="text" id="ag-city" placeholder="Optional"/></div>
+      </div>
+      <button class="btn btn-navy" onclick="addAgencyFull()">Add agency</button>
+    </div>
+  </div>
+  <div class="form-card">
+    <div class="form-title">Data management</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-navy btn-sm" onclick="exportJSON()">&#128190; Export all data (JSON)</button>
+      <button class="btn btn-outline btn-sm" onclick="importJSON()">&#128229; Import data (JSON)</button>
+      <button class="btn btn-orange btn-sm" onclick="exportPDF()">&#128196; Export PDF report</button>
+      <button class="btn btn-outline btn-sm" onclick="exportCSV()">&#128202; Export CSV</button>
+    </div>
+    <input type="file" id="import-file" accept=".json" style="display:none" onchange="doImport(event)"/>
+    <div style="margin-top:10px;font-size:11px;color:var(--muted)">
+      Data is stored locally in your browser. Use "Export all data" to back up regularly.
+      To share with another device, export JSON and import on the other device.
+    </div>
+  </div>
+</div>
+
+<script>
+var DRUGS=[
+  {name:'Fentanyl',color:'#E8500A'},{name:'Versed',color:'#1a8a3a'},
+  {name:'Morphine',color:'#0d2a5e'},{name:'Ketamine',color:'#9B1C3A'},
+  {name:'Ativan',color:'#7a1a2e'},{name:'Narcan',color:'#0077b6'},
+  {name:'Valium',color:'#7209b7'},{name:'Waste',color:'#555e6e'}
+];
+var LOW=50;
+
+function dc(n){var d=DRUGS.find(function(x){return x.name===n;});return d?d.color:'#888';}
+function today(){return new Date().toISOString().slice(0,10);}
+function nowTime(){return new Date().toTimeString().slice(0,5);}
+
+/* STORAGE — localStorage with JSON fallback */
+var DB={
+  get:function(k){try{var v=localStorage.getItem(k);return v?JSON.parse(v):null;}catch(e){return null;}},
+  set:function(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){showToast('Storage full!',true);}},
+};
+
+var entries=[];
+var agencies=[];
+var inventory={};
+var currentAgency='';
+
+function defInv(){var i={};DRUGS.forEach(function(d){i[d.name]={short:200,carpuject:100};});return i;}
+
+function loadAll(){
+  entries=DB.get('bbt_entries')||[];
+  agencies=DB.get('bbt_agencies')||[{id:'blaster',name:'Blaster Communications Inc.',code:'BCI',contact:'Jeff',email:'bjlaster@msn.com',phone:'909-373-5665',city:''}];
+  inventory=DB.get('bbt_inventory')||defInv();
+}
+function saveAll(){
+  DB.set('bbt_entries',entries);
+  DB.set('bbt_agencies',agencies);
+  DB.set('bbt_inventory',inventory);
+  updateStorageInfo();
+}
+
+function updateStorageInfo(){
+  try{
+    var sz=JSON.stringify(entries).length+JSON.stringify(agencies).length+JSON.stringify(inventory).length;
+    var kb=(sz/1024).toFixed(1);
+    var info=kb+' KB used  |  '+entries.length+' entries  |  '+agencies.length+' agencies';
+    ['ag-storage','m-storage'].forEach(function(id){var el=document.getElementById(id);if(el)el.textContent=info;});
+    ['ag-entries','m-entries'].forEach(function(id){var el=document.getElementById(id);if(el)el.textContent=entries.length+' total entries';});
+  }catch(e){}
+}
+
+/* TOAST */
+var toastTimer;
+function showToast(msg,err){
+  var t=document.getElementById('toast');
+  t.textContent=msg;t.style.background=err?'#dc2626':'#0d2a5e';t.style.color='#fff';
+  t.classList.add('show');clearTimeout(toastTimer);
+  toastTimer=setTimeout(function(){t.classList.remove('show');},2500);
+}
+
+/* TABS */
+function showTab(id,el){
+  document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');});
+  document.querySelectorAll('.view').forEach(function(v){v.classList.remove('active');});
+  if(el)el.classList.add('active');
+  document.getElementById('view-'+id).classList.add('active');
+  var fns={dashboard:renderDashboard,history:renderHistory,inventory:renderInventory,reports:renderReports,agencies:renderAgencies};
+  if(fns[id])fns[id]();
+}
+
+/* AGENCY NAME */
+function agName(id){var a=agencies.find(function(x){return x.id===id;});return a?a.code:id||'?';}
+function agFull(id){var a=agencies.find(function(x){return x.id===id;});return a?a.name:id||'?';}
+
+/* POPULATE SELECTS */
+function populateSelects(){
+  var ids=['f-agency','flt-agency','inv-flt','rpt-flt'];
+  ids.forEach(function(sid){
+    var el=document.getElementById(sid);if(!el)return;
+    var cur=el.value;
+    el.innerHTML='<option value="">All agencies</option>';
+    agencies.forEach(function(a){
+      var o=document.createElement('option');
+      o.value=a.id;o.textContent=a.code+' — '+a.name;
+      el.appendChild(o);
+    });
+    el.value=cur;
+  });
+  // Dynamically build month list from actual entry dates + last 12 months
+  var monthSel=document.getElementById('rpt-month');
+  if(monthSel){
+    var cur=monthSel.value;
+    var months=new Set();
+    // Add months from all entries
+    entries.forEach(function(e){if(e.date&&e.date.length>=7)months.add(e.date.slice(0,7));});
+    // Always include last 12 months
+    var d=new Date();
+    for(var i=0;i<12;i++){
+      var y=d.getFullYear();var m=String(d.getMonth()+1).padStart(2,'0');
+      months.add(y+'-'+m);
+      d.setMonth(d.getMonth()-1);
+    }
+    var sorted=Array.from(months).sort().reverse();
+    monthSel.innerHTML='<option value="">All time</option>';
+    sorted.forEach(function(m){
+      var o=document.createElement('option');
+      o.value=m;
+      var parts=m.split('-');
+      var label=new Date(parts[0],parseInt(parts[1])-1,1).toLocaleString('default',{month:'long',year:'numeric'});
+      o.textContent=label;
+      monthSel.appendChild(o);
+    });
+    monthSel.value=cur;
+  }
+  var pill=document.getElementById('agency-pill');
+  if(pill)pill.textContent=(currentAgency?agName(currentAgency):'All agencies')+' ▾';
+}
+
+/* MODAL */
+function openModal(){
+  renderModalList();
+  updateStorageInfo();
+  document.getElementById('agency-modal').classList.add('open');
+}
+function closeModal(){document.getElementById('agency-modal').classList.remove('open');}
+document.getElementById('agency-modal').addEventListener('click',function(e){if(e.target===this)closeModal();});
+
+function renderModalList(){
+  var el=document.getElementById('m-agency-list');
+  var html='<div class="agency-item'+(currentAgency===''?' sel':'')+'" onclick="selectAgency(\'\')"><span style="font-weight:600">All agencies</span>'+(currentAgency===''?'<span style="font-size:11px;color:var(--navy)">✓ Active</span>':'')+'</div>';
+  agencies.forEach(function(a){
+    html+='<div class="agency-item'+(currentAgency===a.id?' sel':'')+'" onclick="selectAgency(\''+a.id+'\')"><div><strong>'+a.code+'</strong> — '+a.name+(a.city?' <span style="color:var(--muted);font-size:11px">('+a.city+')</span>':'')+'</div>'+(currentAgency===a.id?'<span style="font-size:11px;color:var(--navy)">✓ Active</span>':'')+'</div>';
+  });
+  el.innerHTML=html;
+}
+
+function selectAgency(id){
+  currentAgency=id;populateSelects();
+  renderModalList();renderDashboard();
+}
+
+function quickAddAgency(){
+  var name=document.getElementById('m-ag-name').value.trim();
+  var code=document.getElementById('m-ag-code').value.trim().toUpperCase();
+  if(!name||!code){showToast('Name and code required',true);return;}
+  var a={id:'ag_'+Date.now(),name,code,contact:'',email:'',phone:'',city:''};
+  agencies.push(a);saveAll();
+  document.getElementById('m-ag-name').value='';document.getElementById('m-ag-code').value='';
+  populateSelects();renderModalList();showToast('Agency added!');
+}
+
+/* LOG ENTRY */
+function saveEntry(){
+  var agency=document.getElementById('f-agency').value;
+  var date=document.getElementById('f-date').value;
+  var time=document.getElementById('f-time').value;
+  var unit=document.getElementById('f-unit').value.trim();
+  var drug=document.getElementById('f-drug').value;
+  var size=document.getElementById('f-size').value;
+  var qty=parseInt(document.getElementById('f-qty').value)||1;
+  var barcode=document.getElementById('f-barcode').value.trim();
+  var medic=document.getElementById('f-medic').value.trim();
+  var call=document.getElementById('f-call').value.trim();
+  var notes=document.getElementById('f-notes').value.trim();
+  if(!agency||!date||!unit||!drug||!barcode||!medic){showToast('Please fill all required fields',true);return;}
+  var entry={id:Date.now(),agency,date,time,unit,drug,size,qty,barcode,medic,call,notes};
+  entries.unshift(entry);
+  var key=size.indexOf('Carpuject')>=0?'carpuject':'short';
+  if(inventory[drug]&&inventory[drug][key]>=qty)inventory[drug][key]-=qty;
+  else if(inventory[drug])inventory[drug][key]=0;
+  saveAll();
+  document.getElementById('f-barcode').value='';
+  document.getElementById('f-medic').value='';
+  document.getElementById('f-call').value='';
+  document.getElementById('f-notes').value='';
+  document.getElementById('f-qty').value='1';
+  showToast('Bag logged and saved!');
+}
+
+function clearForm(){
+  ['f-agency','f-drug','f-size','f-unit','f-barcode','f-medic','f-call','f-notes'].forEach(function(id){
+    var el=document.getElementById(id);if(el)el.value='';
+  });
+  document.getElementById('f-qty').value='1';
+  document.getElementById('f-date').value=today();
+  document.getElementById('f-time').value=nowTime();
+}
+
+function deleteEntry(id){
+  var idx=entries.findIndex(function(e){return e.id===id;});
+  if(idx>=0){
+    var e=entries[idx];
+    var key=e.size&&e.size.indexOf('Carpuject')>=0?'carpuject':'short';
+    var qty=e.qty||1;
+    if(inventory[e.drug])inventory[e.drug][key]+=qty;
+    entries.splice(idx,1);saveAll();
+  }
+  renderHistory();renderDashboard();showToast('Entry deleted');
+}
+
+/* DASHBOARD */
+function renderDashboard(){
+  var td=today();var mn=td.slice(0,7);
+  var vis=currentAgency?entries.filter(function(e){return e.agency===currentAgency;}):entries;
+  document.getElementById('s-today').textContent=vis.filter(function(e){return e.date===td;}).length;
+  document.getElementById('s-month').textContent=vis.filter(function(e){return e.date&&e.date.startsWith(mn);}).length;
+  document.getElementById('s-total').textContent=vis.length;
+  var lowN=0;var alerts='';
+  DRUGS.forEach(function(d){
+    var t=(inventory[d.name]?inventory[d.name].short+inventory[d.name].carpuject:0);
+    if(t<LOW){lowN++;alerts+='<div class="alert"><span>&#9888; Low stock: <strong>'+d.name+'</strong> — only '+t+' bags remaining</span><a href="mailto:bjlaster@msn.com?subject=Reorder: '+d.name+' bags" style="color:#92400e;font-weight:600">Reorder now</a></div>';}
+  });
+  document.getElementById('s-low').textContent=lowN;
+  document.getElementById('dash-alerts').innerHTML=alerts;
+  var invH='';
+  DRUGS.forEach(function(d){
+    var inv=inventory[d.name]||{short:0,carpuject:0};
+    var total=inv.short+inv.carpuject;
+    var pct=Math.min(100,Math.round(total/600*100));
+    var clr=total<LOW?'#dc2626':d.color;
+    invH+='<div class="inv-card" style="border-top-color:'+d.color+'"><div class="inv-drug" style="color:'+d.color+'">'+d.name+'</div><div class="inv-count" style="color:'+(total<LOW?'#dc2626':'var(--text)')+'">'+total+'</div><div class="inv-sub">on hand</div><div class="inv-bar"><div class="inv-fill" style="width:'+pct+'%;background:'+clr+'"></div></div></div>';
+  });
+  document.getElementById('dash-inv').innerHTML=invH;
+  var recent=vis.slice(0,8);
+  if(!recent.length){
+    document.getElementById('dash-recent').innerHTML='<div class="empty">No entries yet. <a href="#" onclick="showTab(\'log\',document.querySelectorAll(\'.tab\')[1])">Log your first bag</a></div>';
+    return;
+  }
+  var h='<div class="tbl-wrap"><table><thead><tr><th>Agency</th><th>Date</th><th>Unit</th><th>Drug</th><th>Barcode</th><th>Medic</th></tr></thead><tbody>';
+  recent.forEach(function(e){
+    h+='<tr><td>'+agName(e.agency)+'</td><td>'+e.date+'</td><td>'+e.unit+'</td><td><span class="drug-dot" style="background:'+dc(e.drug)+'"></span>'+e.drug+'</td><td style="color:var(--muted);font-size:11px">'+e.barcode+'</td><td>'+e.medic+'</td></tr>';
+  });
+  document.getElementById('dash-recent').innerHTML=h+'</tbody></table></div>';
+}
+
+/* HISTORY */
+function getFiltered(){
+  var fa=document.getElementById('flt-agency').value;
+  var fd=document.getElementById('flt-drug').value;
+  var fu=(document.getElementById('flt-unit').value||'').trim().toLowerCase();
+  var fm=(document.getElementById('flt-medic').value||'').trim().toLowerCase();
+  var ff=document.getElementById('flt-from').value;
+  var ft=document.getElementById('flt-to').value;
+  var fb=(document.getElementById('flt-barcode').value||'').trim().toLowerCase();
+  return entries.filter(function(e){
+    return (!fa||e.agency===fa)&&(!fd||e.drug===fd)&&(!fu||e.unit.toLowerCase().includes(fu))&&
+           (!fm||e.medic.toLowerCase().includes(fm))&&(!ff||e.date>=ff)&&(!ft||e.date<=ft)&&
+           (!fb||(e.barcode||'').toLowerCase().includes(fb));
+  });
+}
+
+function renderHistory(){
+  var filtered=getFiltered();
+  var fb=(document.getElementById('flt-barcode').value||'').trim().toLowerCase();
+  var tbody=document.getElementById('history-body');tbody.innerHTML='';
+  document.getElementById('history-empty').style.display=filtered.length?'none':'block';
+  document.getElementById('history-count').textContent=filtered.length+' entries shown';
+  var matchEl=document.getElementById('barcode-match-count');
+  if(matchEl)matchEl.textContent=fb?(filtered.length+' match'+(filtered.length!==1?'es':'')+''):'';
+  filtered.forEach(function(e){
+    var tr=document.createElement('tr');
+    var barcodeDisplay=e.barcode||'';
+    if(fb&&barcodeDisplay.toLowerCase().includes(fb)){
+      var re=new RegExp('('+fb.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi');
+      barcodeDisplay=barcodeDisplay.replace(re,'<mark style="background:#fef08a;border-radius:2px;padding:0 2px">$1</mark>');
+      tr.style.background='#fffbeb';
+    }
+    tr.innerHTML='<td>'+agName(e.agency)+'</td><td>'+e.date+'</td><td>'+e.time+'</td><td>'+e.unit+'</td>'+
+      '<td><span class="drug-dot" style="background:'+dc(e.drug)+'"></span>'+e.drug+'</td>'+
+      '<td style="font-size:11px">'+e.size.split(' ')[0]+'</td><td>'+(e.qty||1)+'</td>'+
+      '<td style="color:var(--muted);font-size:11px">'+barcodeDisplay+'</td><td>'+e.medic+'</td>'+
+      '<td style="font-size:11px">'+(e.call||'—')+'</td><td style="font-size:11px;color:var(--muted)">'+(e.notes||'—')+'</td>'+
+      '<td><button class="btn-danger-sm" onclick="deleteEntry('+e.id+')">Del</button></td>';
+    tbody.appendChild(tr);
+  });
+}
+
+function clearFilters(){
+  ['flt-agency','flt-drug','flt-unit','flt-medic','flt-from','flt-to','flt-barcode'].forEach(function(id){
+    var el=document.getElementById(id);if(el)el.value='';
+  });
+  var matchEl=document.getElementById('barcode-match-count');
+  if(matchEl)matchEl.textContent='';
+  renderHistory();
+}
+
+/* INVENTORY */
+function renderInventory(){
+  var h='';
+  DRUGS.forEach(function(d){
+    var inv=inventory[d.name]||{short:0,carpuject:0};
+    var total=inv.short+inv.carpuject;var low=total<LOW;
+    h+='<tr>';
+    h+='<td><span class="drug-dot" style="background:'+d.color+'"></span><strong>'+d.name+'</strong></td>';
+    h+='<td><span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:'+d.color+'"></span></td>';
+    h+='<td>'+inv.short+' <button class="btn btn-outline btn-sm" onclick="adjInv(\''+d.name+'\',\'short\',50)">+50</button> <button class="btn btn-outline btn-sm" onclick="adjInv(\''+d.name+'\',\'short\',-1)">&#8722;</button></td>';
+    h+='<td>'+inv.carpuject+' <button class="btn btn-outline btn-sm" onclick="adjInv(\''+d.name+'\',\'carpuject\',50)">+50</button> <button class="btn btn-outline btn-sm" onclick="adjInv(\''+d.name+'\',\'carpuject\',-1)">&#8722;</button></td>';
+    h+='<td><strong style="color:'+(low?'#dc2626':'var(--text)')+'">'+total+'</strong></td>';
+    h+='<td><span class="badge '+(low?'badge-low':'badge-ok')+'">'+(low?'Low stock':'OK')+'</span></td>';
+    h+='<td><a href="mailto:bjlaster@msn.com?subject=Reorder: '+d.name+' bags&body=Please send '+d.name+' bags. Current stock: '+total+'" style="font-size:12px">Reorder</a></td>';
+    h+='</tr>';
+  });
+  document.getElementById('inv-body').innerHTML=h;
+}
+
+function adjInv(drug,type,delta){
+  if(!inventory[drug])inventory[drug]={short:0,carpuject:0};
+  inventory[drug][type]=Math.max(0,inventory[drug][type]+delta);
+  saveAll();renderInventory();renderDashboard();showToast('Inventory updated');
+}
+
+/* REPORTS */
+function renderReports(){
+  var sa=document.getElementById('rpt-flt').value;
+  var sm=document.getElementById('rpt-month').value;
+  var vis=entries.filter(function(e){return(!sa||e.agency===sa)&&(!sm||e.date&&e.date.startsWith(sm));});
+  var dCounts={};var uCounts={};var mCounts={};var dateCounts={};var agCounts={};
+  DRUGS.forEach(function(d){dCounts[d.name]=0;});
+  vis.forEach(function(e){
+    var q=e.qty||1;
+    if(dCounts[e.drug]!==undefined)dCounts[e.drug]+=q;
+    uCounts[e.unit]=(uCounts[e.unit]||0)+q;
+    if(e.medic)mCounts[e.medic]=(mCounts[e.medic]||0)+q;
+    if(e.date)dateCounts[e.date]=(dateCounts[e.date]||0)+q;
+    if(e.agency)agCounts[e.agency]=(agCounts[e.agency]||0)+q;
+  });
+  function bars(obj,colors,limit){
+    var e2=Object.entries(obj).sort(function(a,b){return b[1]-a[1];}).slice(0,limit||6);
+    var mx=Math.max(1,...e2.map(function(x){return x[1];}));
+    return e2.length?e2.map(function(kv){
+      var pct=Math.round(kv[1]/mx*100);
+      var clr=colors&&colors[kv[0]]?colors[kv[0]]:'#0d2a5e';
+      return '<div class="bar-row"><div class="bar-label" title="'+kv[0]+'">'+kv[0].split(' ')[0]+'</div><div class="bar-track"><div class="bar-fill" style="width:'+pct+'%;background:'+clr+'"></div></div><div class="bar-val">'+kv[1]+'</div></div>';
+    }).join(''):'<div class="empty">No data yet</div>';
+  }
+  var dc2={};DRUGS.forEach(function(d){dc2[d.name]=d.color;});
+  var dateE=Object.entries(dateCounts).sort(function(a,b){return a[0]>b[0]?1:-1;}).slice(-10);
+  var mxD=Math.max(1,...dateE.map(function(x){return x[1];}));
+  var dateBars=dateE.length?dateE.map(function(kv){var p=Math.round(kv[1]/mxD*100);return '<div class="bar-row"><div class="bar-label">'+kv[0].slice(5)+'</div><div class="bar-track"><div class="bar-fill" style="width:'+p+'%;background:#E8500A"></div></div><div class="bar-val">'+kv[1]+'</div></div>';}).join(''):'<div class="empty">No data yet</div>';
+  var tc=vis.filter(function(e){return e.size&&e.size.indexOf('Carpuject')>=0;}).reduce(function(a,e){return a+(e.qty||1);},0);
+  var ts=vis.reduce(function(a,e){return a+(e.qty||1);},0)-tc;
+  document.getElementById('report-grid').innerHTML=
+    '<div class="report-card"><h3>Bags used by drug</h3>'+bars(dCounts,dc2,8)+'</div>'+
+    '<div class="report-card"><h3>Usage by unit (top 6)</h3>'+bars(uCounts,null,6)+'</div>'+
+    '<div class="report-card"><h3>Top medics by bags logged</h3>'+bars(mCounts,{'default':'#1a8a3a'},6)+'</div>'+
+    '<div class="report-card"><h3>Daily activity (last 10 days)</h3>'+dateBars+'<div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);font-size:12px;color:var(--muted)">Short bags: <strong>'+ts+'</strong> &nbsp;|&nbsp; Carpuject: <strong>'+tc+'</strong> &nbsp;|&nbsp; Total: <strong>'+vis.reduce(function(a,e){return a+(e.qty||1);},0)+'</strong></div></div>';
+}
+
+/* AGENCIES */
+function renderAgencies(){
+  updateStorageInfo();
+  var h='';
+  if(!agencies.length){h='<div class="empty">No agencies yet.</div>';}
+  else{
+    h='<div class="tbl-wrap"><table><thead><tr><th>Code</th><th>Name</th><th>City</th><th>Contact</th><th>Email</th><th>Phone</th><th>Entries</th><th></th></tr></thead><tbody>';
+    agencies.forEach(function(a){
+      var cnt=entries.filter(function(e){return e.agency===a.id;}).length;
+      h+='<tr><td><strong>'+a.code+'</strong></td><td>'+a.name+'</td><td>'+(a.city||'—')+'</td><td>'+(a.contact||'—')+'</td>';
+      h+='<td>'+(a.email?'<a href="mailto:'+a.email+'">'+a.email+'</a>':'—')+'</td>';
+      h+='<td>'+(a.phone||'—')+'</td><td>'+cnt+'</td>';
+      h+='<td><button class="btn-danger-sm" onclick="removeAgency(\''+a.id+'\')">Remove</button></td></tr>';
+    });
+    h+='</tbody></table></div>';
+  }
+  document.getElementById('agency-table-wrap').innerHTML=h;
+}
+
+function addAgencyFull(){
+  var name=document.getElementById('ag-name').value.trim();
+  var code=document.getElementById('ag-code').value.trim().toUpperCase();
+  var contact=document.getElementById('ag-contact').value.trim();
+  var email=document.getElementById('ag-email').value.trim();
+  var phone=document.getElementById('ag-phone').value.trim();
+  var city=document.getElementById('ag-city').value.trim();
+  if(!name||!code){showToast('Name and code are required',true);return;}
+  agencies.push({id:'ag_'+Date.now(),name,code,contact,email,phone,city});
+  saveAll();
+  ['ag-name','ag-code','ag-contact','ag-email','ag-phone','ag-city'].forEach(function(id){document.getElementById(id).value='';});
+  populateSelects();renderAgencies();showToast('Agency added!');
+}
+
+function removeAgency(id){
+  if(!confirm('Remove this agency? Their logged entries will remain in history.'))return;
+  agencies=agencies.filter(function(a){return a.id!==id;});
+  if(currentAgency===id){currentAgency='';populateSelects();}
+  saveAll();renderAgencies();showToast('Agency removed');
+}
+
+/* EXPORT PDF */
+function exportPDF(){
+  try{
+    var filtered=getFiltered();
+    var doc=new window.jspdf.jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
+    var W=297;var M=14;
+    doc.setFillColor(13,42,94);doc.rect(0,0,W,22,'F');
+    doc.setTextColor(255,255,255);doc.setFontSize(14);doc.setFont('helvetica','bold');
+    doc.text('Blaster Communications Inc. — Narcotic Bag Tracking Report',M,14);
+    doc.setFontSize(9);doc.setFont('helvetica','normal');
+    doc.text('Generated: '+new Date().toLocaleString()+'   Total: '+filtered.length+' entries',W-M,14,{align:'right'});
+    doc.setDrawColor(232,80,10);doc.setLineWidth(1);doc.line(0,22,W,22);
+    var cols=['Agency','Date','Time','Unit','Drug','Size','Qty','Barcode','Medic','Call #','Notes'];
+    var cw=[26,22,16,22,22,18,12,32,26,18,60];
+    var y=32;
+    doc.setFillColor(240,244,251);doc.rect(M,y-5,W-M*2,8,'F');
+    doc.setTextColor(13,42,94);doc.setFontSize(9);doc.setFont('helvetica','bold');
+    var cx=M;cols.forEach(function(c,i){doc.text(c,cx,y);cx+=cw[i];});
+    y+=4;doc.setDrawColor(200,210,230);doc.setLineWidth(0.3);doc.line(M,y,W-M,y);y+=5;
+    doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(30,30,30);
+    filtered.forEach(function(e,idx){
+      if(y>190){doc.addPage();y=20;doc.setTextColor(13,42,94);doc.setFontSize(9);doc.text('Blaster Bag Tracker — continued',M,14);y=24;doc.setTextColor(30,30,30);doc.setFontSize(8.5);}
+      if(idx%2===0){doc.setFillColor(248,250,253);doc.rect(M,y-4,W-M*2,7,'F');}
+      cx=M;
+      var vals=[agName(e.agency),e.date||'',e.time||'',e.unit||'',e.drug||'',e.size?e.size.split(' ')[0]:'',String(e.qty||1),e.barcode||'',e.medic||'',e.call||'—',e.notes||''];
+      vals.forEach(function(v,i){
+        var s=String(v);
+        var maxW=cw[i]-2;
+        if(doc.getTextWidth(s)>maxW)s=s.substring(0,Math.floor(maxW/doc.getTextWidth('a')))+'…';
+        doc.text(s,cx,y);cx+=cw[i];
+      });
+      doc.setDrawColor(230,235,245);doc.setLineWidth(0.2);doc.line(M,y+2.5,W-M,y+2.5);
+      y+=7;
+    });
+    if(!filtered.length){doc.setTextColor(120,120,120);doc.text('No entries to display.',M,40);}
+    var pg=doc.getNumberOfPages();
+    for(var i=1;i<=pg;i++){
+      doc.setPage(i);doc.setFontSize(8);doc.setTextColor(150,150,150);
+      doc.text('Blaster Communications Inc.  |  bjlaster@msn.com  |  909-373-5665  |  BlasterCommunicationsInc.com  |  Page '+i+' of '+pg,W/2,204,{align:'center'});
+    }
+    doc.save('blaster-bag-report-'+today()+'.pdf');
+    showToast('PDF exported!');
+  }catch(err){showToast('PDF error: '+err.message,true);}
+}
+
+/* EXPORT/IMPORT JSON */
+function exportJSON(){
+  var data={version:2,exported:new Date().toISOString(),entries,agencies,inventory};
+  var blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');a.href=url;a.download='blaster-tracker-backup-'+today()+'.json';a.click();
+  URL.revokeObjectURL(url);showToast('Data exported!');
+}
+function importJSON(){document.getElementById('import-file').click();}
+function doImport(e){
+  var file=e.target.files[0];if(!file)return;
+  var reader=new FileReader();
+  reader.onload=function(ev){
+    try{
+      var data=JSON.parse(ev.target.result);
+      if(data.entries)entries=data.entries;
+      if(data.agencies)agencies=data.agencies;
+      if(data.inventory)inventory=data.inventory;
+      saveAll();populateSelects();renderDashboard();
+      showToast('Data imported! '+entries.length+' entries loaded.');
+    }catch(err){showToast('Import failed: invalid file',true);}
+  };
+  reader.readAsText(file);
+  e.target.value='';
+}
+
+/* EXPORT CSV */
+function exportCSV(){
+  var filtered=getFiltered();
+  var rows=[['Agency','Date','Time','Unit','Drug','Size','Qty','Barcode','Medic','Call #','Notes']];
+  filtered.forEach(function(e){
+    rows.push([agFull(e.agency),e.date,e.time,e.unit,e.drug,e.size,e.qty||1,e.barcode,e.medic,e.call||'',e.notes||'']);
+  });
+  var csv=rows.map(function(r){return r.map(function(c){return '"'+String(c||'').replace(/"/g,'""')+'"';}).join(',');}).join('\n');
+  var blob=new Blob([csv],{type:'text/csv'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');a.href=url;a.download='blaster-bags-'+today()+'.csv';a.click();
+  URL.revokeObjectURL(url);showToast('CSV exported!');
+}
+
+/* INIT */
+loadAll();
+document.getElementById('f-date').value=today();
+document.getElementById('f-time').value=nowTime();
+populateSelects();
+renderDashboard();
+
+/* ===== BARCODE SCANNER ===== */
+var scannerTargetField = null;
+var codeReader = null;
+var scannerStream = null;
+var availableCameras = [];
+var currentCameraIndex = 0;
+var scannerActive = false;
+
+function openScanner(targetFieldId) {
+  scannerTargetField = targetFieldId;
+  document.getElementById('scanner-modal').classList.add('open');
+  document.getElementById('scanner-status').textContent = 'Starting camera…';
+  document.getElementById('scanner-status').className = 'scanner-status';
+  document.getElementById('manual-barcode').value = '';
+  initScanner();
+}
+
+function closeScanner() {
+  document.getElementById('scanner-modal').classList.remove('open');
+  stopScanner();
+}
+
+function stopScanner() {
+  scannerActive = false;
+  if (codeReader) {
+    try { codeReader.reset(); } catch(e) {}
+    codeReader = null;
+  }
+  if (scannerStream) {
+    scannerStream.getTracks().forEach(function(t) { t.stop(); });
+    scannerStream = null;
+  }
+  var v = document.getElementById('scanner-video');
+  v.srcObject = null;
+}
+
+async function initScanner() {
+  stopScanner();
+  scannerActive = true;
+
+  if (typeof ZXing === 'undefined') {
+    setStatus('Barcode library not loaded. Use manual entry below.', 'error');
+    return;
+  }
+
+  try {
+    // Enumerate cameras
+    var devices = await navigator.mediaDevices.enumerateDevices();
+    availableCameras = devices.filter(function(d) { return d.kind === 'videoinput'; });
+
+    var sel = document.getElementById('cam-select');
+    sel.innerHTML = '';
+    if (!availableCameras.length) {
+      sel.innerHTML = '<option>No cameras found</option>';
+    } else {
+      availableCameras.forEach(function(d, i) {
+        var o = document.createElement('option');
+        o.value = i;
+        o.textContent = d.label || ('Camera ' + (i + 1));
+        sel.appendChild(o);
+      });
+      // Prefer rear camera
+      var rearIdx = availableCameras.findIndex(function(d) {
+        return /back|rear|environment/i.test(d.label);
+      });
+      currentCameraIndex = rearIdx >= 0 ? rearIdx : availableCameras.length - 1;
+      sel.value = currentCameraIndex;
+    }
+
+    await startCameraStream();
+  } catch(err) {
+    setStatus('Camera error: ' + err.message, 'error');
+  }
+}
+
+async function startCameraStream() {
+  if (!scannerActive) return;
+  try {
+    var constraints = { video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } } };
+    if (availableCameras.length && availableCameras[currentCameraIndex]) {
+      constraints.video = { deviceId: { exact: availableCameras[currentCameraIndex].deviceId }, width: { ideal: 1280 } };
+    }
+
+    scannerStream = await navigator.mediaDevices.getUserMedia(constraints);
+    var v = document.getElementById('scanner-video');
+    v.srcObject = scannerStream;
+    await v.play();
+
+    setStatus('Point camera at a barcode…', '');
+    startDecoding(v);
+  } catch(err) {
+    if (err.name === 'NotAllowedError') {
+      setStatus('Camera permission denied. Use manual entry below.', 'error');
+    } else {
+      setStatus('Cannot access camera: ' + err.message, 'error');
+    }
+  }
+}
+
+function startDecoding(videoEl) {
+  if (!scannerActive) return;
+  try {
+    codeReader = new ZXing.BrowserMultiFormatReader();
+    codeReader.decodeFromVideoElement(videoEl, function(result, err) {
+      if (!scannerActive) return;
+      if (result) {
+        onBarcodeDetected(result.getText());
+      }
+      // errors are continuous — only show if camera stopped
+    });
+  } catch(e) {
+    setStatus('Scanner error: ' + e.message, 'error');
+  }
+}
+
+function onBarcodeDetected(code) {
+  if (!code || !scannerActive) return;
+  scannerActive = false; // prevent double-fires
+
+  setStatus('✓ Scanned: ' + code, 'success');
+
+  // Flash feedback
+  var box = document.querySelector('.scanner-box');
+  box.style.boxShadow = '0 0 0 4px #4ade80, 0 24px 60px rgba(0,0,0,0.6)';
+  setTimeout(function() {
+    box.style.boxShadow = '0 0 0 3px var(--orange), 0 24px 60px rgba(0,0,0,0.6)';
+  }, 600);
+
+  // Fill in the target field
+  if (scannerTargetField) {
+    var el = document.getElementById(scannerTargetField);
+    if (el) {
+      el.value = code;
+      el.style.borderColor = '#16a34a';
+      el.style.boxShadow = '0 0 0 3px rgba(22,163,74,0.15)';
+      setTimeout(function() {
+        el.style.borderColor = '';
+        el.style.boxShadow = '';
+      }, 2000);
+      // If scanning into the history barcode filter, auto-run search
+      if (scannerTargetField === 'flt-barcode') {
+        renderHistory();
+        // Switch to history tab if not already there
+        var histTab = document.querySelectorAll('.tab')[2];
+        showTab('history', histTab);
+      }
+    }
+  }
+
+  showToast('Barcode scanned: ' + code);
+
+  // Auto-close after short delay
+  setTimeout(function() {
+    closeScanner();
+  }, 900);
+}
+
+function confirmManual() {
+  var val = document.getElementById('manual-barcode').value.trim();
+  if (!val) { setStatus('Please enter a barcode value', 'error'); return; }
+  onBarcodeDetected(val);
+}
+
+function switchCamera() {
+  currentCameraIndex = parseInt(document.getElementById('cam-select').value) || 0;
+  if (scannerStream) {
+    scannerStream.getTracks().forEach(function(t) { t.stop(); });
+    scannerStream = null;
+  }
+  if (codeReader) {
+    try { codeReader.reset(); } catch(e) {}
+    codeReader = null;
+  }
+  scannerActive = true;
+  startCameraStream();
+}
+
+function setStatus(msg, type) {
+  var el = document.getElementById('scanner-status');
+  el.textContent = msg;
+  el.className = 'scanner-status' + (type ? ' ' + type : '');
+}
+
+// Close scanner on overlay click
+document.getElementById('scanner-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeScanner();
+});
+
+/* ===== PWA INSTALL PROMPT ===== */
+var deferredInstallPrompt = null;
+
+window.addEventListener('beforeinstallprompt', function(e) {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  // Show banner if not already dismissed
+  if (!localStorage.getItem('bbt_install_dismissed')) {
+    document.getElementById('install-banner').style.display = 'flex';
+  }
+});
+
+document.getElementById('install-btn').addEventListener('click', function() {
+  if (!deferredInstallPrompt) return;
+  deferredInstallPrompt.prompt();
+  deferredInstallPrompt.userChoice.then(function(result) {
+    if (result.outcome === 'accepted') {
+      document.getElementById('install-banner').style.display = 'none';
+      showToast('App installed! Open from your home screen.');
+    }
+    deferredInstallPrompt = null;
+  });
+});
+
+function dismissInstall() {
+  document.getElementById('install-banner').style.display = 'none';
+  localStorage.setItem('bbt_install_dismissed', '1');
+}
+
+window.addEventListener('appinstalled', function() {
+  document.getElementById('install-banner').style.display = 'none';
+  showToast('Blaster Bag Tracker installed!');
+});
+
+/* ===== SERVICE WORKER (offline support) ===== */
+if ('serviceWorker' in navigator) {
+  var swCode = `
+const CACHE = 'bbt-v1';
+const URLS = [self.location.href];
+self.addEventListener('install', e => {
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(URLS)));
+  self.skipWaiting();
+});
+self.addEventListener('activate', e => {
+  e.waitUntil(caches.keys().then(keys =>
+    Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
+  ));
+  self.clients.claim();
+});
+self.addEventListener('fetch', e => {
+  e.respondWith(
+    caches.match(e.request).then(r => r || fetch(e.request).catch(() => caches.match(e.request)))
+  );
+});
+`;
+  var swBlob = new Blob([swCode], {type: 'application/javascript'});
+  var swUrl = URL.createObjectURL(swBlob);
+  navigator.serviceWorker.register(swUrl).catch(function(){});
+}
+
+/* ===== DATA BACKUP REMINDER ===== */
+(function checkBackupReminder() {
+  var lastReminder = parseInt(localStorage.getItem('bbt_last_reminder') || '0');
+  var now = Date.now();
+  var threeDays = 3 * 24 * 60 * 60 * 1000;
+  if (entries.length > 0 && now - lastReminder > threeDays) {
+    setTimeout(function() {
+      showToast('💾 Reminder: Export your data backup regularly!');
+      localStorage.setItem('bbt_last_reminder', String(now));
+    }, 3000);
+  }
+})();
+
+/* ===== KEYBOARD SHORTCUT: Escape closes scanner ===== */
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeScanner();
+});
+</script>
+</body>
+</html>
